@@ -2,6 +2,8 @@
 
 A full-stack weather application built with React and FastAPI, featuring real-time weather data, 5-day forecasts, and database persistence.
 
+Weather app made for PM Accelerator AI Engineer Internship
+
 ## 🌟 Features
 
 ### Tech Assessment 1 - Weather App
