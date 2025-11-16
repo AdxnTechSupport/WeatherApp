@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8000/api/weather';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL
+  ? `${import.meta.env.VITE_BACKEND_URL}/api/weather`
+  : 'http://localhost:8000/api/weather';
 
 // Create a new weather query
 export const createWeatherQuery = async (weatherData) => {
