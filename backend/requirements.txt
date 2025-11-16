@@ -1,7 +1,7 @@
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
 sqlalchemy>=2.0.36
-# psycopg2-binary==2.9.9  # Uncomment when deploying to PostgreSQL (Supabase/Neon)
+psycopg2-binary>=2.9.9  # PostgreSQL adapter for Supabase
 pydantic>=2.10.0
 python-dotenv>=1.0.0
 pydantic-settings>=2.7.0
