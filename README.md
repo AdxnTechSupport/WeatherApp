@@ -113,13 +113,32 @@ API documentation: `http://localhost:8000/docs`
 - `GET /api/weather/export/json` - Export as JSON
 - `GET /api/weather/export/csv` - Export as CSV
 
-## 🌐 Cloud Deployment (Optional)
+## 🌐 Cloud Database Setup (Supabase)
 
-### Database (Supabase/Neon)
-1. Create account and project
-2. Get PostgreSQL connection string
-3. Update `DATABASE_URL` in backend `.env`
-4. Uncomment `psycopg2-binary` in `requirements.txt`
+### Setting Up Supabase Database
+
+1. **Create Supabase Account**
+   - Go to https://supabase.com and sign up (free tier)
+   - Click "New Project"
+   - Fill in project name and database password (save this!)
+   - Choose region closest to you
+
+2. **Get Connection String**
+   - In Supabase dashboard, go to Settings → Database
+   - Find "Connection string" section
+   - Select "URI" tab
+   - Copy the connection string (looks like: `postgresql://postgres:[password]@db.xxx.supabase.co:5432/postgres`)
+   - Replace `[password]` with your actual database password
+
+3. **Configure Backend**
+   - Update `DATABASE_URL` in `backend/.env` with your Supabase connection string
+   - Install PostgreSQL adapter: `pip install psycopg2-binary`
+   - Run initialization script: `python backend/init_db.py`
+
+4. **Verify Connection**
+   - Start backend server: `uvicorn app.main:app --reload`
+   - Check http://localhost:8000/docs to verify API is running
+   - All weather searches will now save to your Supabase database!
 
 ### Backend (Railway/Render)
 1. Connect GitHub repository
