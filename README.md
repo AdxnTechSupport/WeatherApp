@@ -4,30 +4,30 @@ A full-stack weather application built with React and FastAPI, featuring real-ti
 
 Weather app made for PM Accelerator AI Engineer Internship
 
-## 🌟 Features
+## Features
 
 ### Tech Assessment 1 - Weather App
-- ✅ Multi-format location search (city name, zip code, GPS coordinates)
-- ✅ Real-time current weather display
-- ✅ 5-day weather forecast
-- ✅ Browser geolocation support
-- ✅ Custom weather icons
-- ✅ Day/night theme switching based on location time
-- ✅ Interactive weather maps with Leaflet
-- ✅ Weather alerts integration
-- ✅ Detailed weather metrics (humidity, pressure, wind speed, etc.)
+- Multi-format location search (city name, zip code, GPS coordinates)
+- Real-time current weather display
+- 5-day weather forecast
+- Browser geolocation support
+- Custom weather icons
+- Day/night theme switching based on location time
+- Interactive weather maps with Leaflet
+- Weather alerts integration
+- Detailed weather metrics (humidity, pressure, wind speed, etc.)
 
 ### Tech Assessment 2 - Backend & Database
-- ✅ RESTful API with FastAPI
-- ✅ Full CRUD operations for weather queries
-- ✅ SQLite database (cloud-ready for PostgreSQL)
-- ✅ Data validation with Pydantic
-- ✅ Automatic history saving on every search
-- ✅ Location filtering and search
-- ✅ Data export (JSON, CSV)
-- ✅ Real-time history updates
+- RESTful API with FastAPI
+- Full CRUD operations for weather queries
+- SQLite database (cloud-ready for PostgreSQL)
+- Data validation with Pydantic
+- Automatic history saving on every search
+- Location filtering and search
+- Data export (JSON, CSV)
+- Real-time history updates
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - React 18 with Vite
@@ -43,7 +43,7 @@ Weather app made for PM Accelerator AI Engineer Internship
 - Pydantic for validation
 - CORS middleware
 
-## 📦 Setup Instructions
+## Setup Instructions
 
 ### Prerequisites
 - Node.js (v16+)
@@ -93,7 +93,7 @@ uvicorn app.main:app --reload
 Backend runs at: `http://localhost:8000`
 API documentation: `http://localhost:8000/docs`
 
-## 🚀 Usage
+## Usage
 
 1. Start both frontend and backend servers
 2. Open `http://localhost:5173` in your browser
@@ -103,7 +103,7 @@ API documentation: `http://localhost:8000/docs`
 6. Filter history by location
 7. Delete saved entries as needed
 
-## 📊 API Endpoints
+## API Endpoints
 
 - `POST /api/weather/` - Create new weather query
 - `GET /api/weather/` - Get all queries (with pagination & filtering)
@@ -113,7 +113,7 @@ API documentation: `http://localhost:8000/docs`
 - `GET /api/weather/export/json` - Export as JSON
 - `GET /api/weather/export/csv` - Export as CSV
 
-## 🌐 Cloud Database Setup (Supabase)
+## Cloud Database Setup (Supabase)
 
 ### Setting Up Supabase Database
 
@@ -138,20 +138,20 @@ API documentation: `http://localhost:8000/docs`
 4. **Verify Connection**
    - Start backend server: `uvicorn app.main:app --reload`
    - Check http://localhost:8000/docs to verify API is running
-   - All weather searches will now save to your Supabase database!
+   - All weather searches will now save to your Supabase database
 
-### Backend (Railway/Render)
+### Optional: Deploy Backend (Railway/Render)
 1. Connect GitHub repository
 2. Set environment variables
 3. Deploy
 
-### Frontend (Vercel)
+### Optional: Deploy Frontend (Vercel)
 1. Connect GitHub repository
 2. Set `VITE_OPENWEATHER_API_KEY` environment variable
 3. Update `backendApi.js` with production backend URL
 4. Deploy
 
-## 📝 Project Structure
+## Project Structure
 
 ```
 Weather App/
@@ -175,7 +175,7 @@ Weather App/
 └── README.md
 ```
 
-## 🔑 Environment Variables
+## Environment Variables
 
 ### Frontend (.env)
 - `VITE_OPENWEATHER_API_KEY` - WeatherAPI.com API key
@@ -185,10 +185,10 @@ Weather App/
 - `CORS_ORIGINS` - Allowed frontend origins
 - `ENVIRONMENT` - Development/production
 
-## 👨‍💻 Developer
+## Developer
 
 Built by Aden for PM Accelerator Technical Assessment
 
-## 📄 License
+## License
 
 This project is for educational and assessment purposes.
