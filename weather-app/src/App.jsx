@@ -9,8 +9,6 @@ import WeatherAlerts from './components/WeatherAlerts';
 import WeatherDetails from './components/WeatherDetails';
 import WeatherMap from './components/WeatherMap';
 import SavedWeatherHistory from './components/SavedWeatherHistory';
-import DateRangeSearch from './components/DateRangeSearch';
-import DateRangeResults from './components/DateRangeResults';
 import { getCurrentWeather, getForecast, getWeatherByCoords } from './utils/weatherApi';
 import { createWeatherQuery, transformWeatherForBackend } from './utils/backendApi';
 
@@ -20,7 +18,6 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
-  const [dateRangeResults, setDateRangeResults] = useState(null);
   const historyRef = useRef(null);
 
   const saveToHistory = async (weatherData) => {
@@ -110,31 +107,6 @@ function App() {
     );
   };
 
-  const handleDateRangeSearch = async (location, startDate, endDate) => {
-    setError('');
-    setDateRangeResults(null);
-
-    try {
-      const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
-      const url = `${API_BASE_URL}/api/weather/search-range?location=${encodeURIComponent(location)}&start_date=${startDate}&end_date=${endDate}`;
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to fetch date range data');
-      }
-
-      const data = await response.json();
-      setDateRangeResults(data);
-
-      // Trigger history refresh since data was saved
-      setHistoryRefreshKey((prev) => prev + 1);
-    } catch (err) {
-      throw new Error(err.message || 'Failed to fetch date range data');
-    }
-  };
-
   // Determine if it's day or night based on weather data
   const isDay = currentWeather?.isDay !== false; // Default to day if no data
 
@@ -169,10 +141,6 @@ function App() {
               <WeatherMap weatherData={currentWeather} isDay={isDay} />
             </>
           )}
-
-          {/* Date Range Search Section */}
-          <DateRangeSearch onSearch={handleDateRangeSearch} isDay={isDay} />
-          {dateRangeResults && <DateRangeResults data={dateRangeResults} isDay={isDay} />}
 
           {!loading && !currentWeather && !error && (
             <div className="bg-gradient-to-b from-blue-500 to-blue-600 rounded-3xl p-8 text-center text-white shadow-2xl">
