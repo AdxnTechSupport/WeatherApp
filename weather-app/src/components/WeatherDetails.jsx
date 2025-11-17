@@ -8,12 +8,12 @@ const WeatherDetails = ({ data, isDay }) => {
     : 'bg-indigo-800/30';
 
   const details = [
-    { label: 'Feels Like', value: `${Math.round(main.feels_like)}°C`, icon: '🌡️' },
-    { label: 'Humidity', value: `${main.humidity}%`, icon: '💧' },
-    { label: 'Wind Speed', value: `${wind.speed.toFixed(1)} m/s`, icon: '💨' },
-    { label: 'Pressure', value: `${main.pressure} hPa`, icon: '🎚️' },
-    { label: 'Cloudiness', value: `${clouds.all}%`, icon: '☁️' },
-    { label: 'Visibility', value: `${(visibility / 1000).toFixed(1)} km`, icon: '👁️' },
+    { label: 'Feels Like', value: `${Math.round(main.feels_like)}°C` },
+    { label: 'Humidity', value: `${main.humidity}%` },
+    { label: 'Wind Speed', value: `${wind.speed.toFixed(1)} m/s` },
+    { label: 'Pressure', value: `${main.pressure} hPa` },
+    { label: 'Cloudiness', value: `${clouds.all}%` },
+    { label: 'Visibility', value: `${(visibility / 1000).toFixed(1)} km` },
   ];
 
   return (
@@ -22,10 +22,7 @@ const WeatherDetails = ({ data, isDay }) => {
       <div className="grid grid-cols-2 gap-3">
         {details.map((detail, index) => (
           <div key={index} className="bg-white/10 rounded-xl p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">{detail.icon}</span>
-              <p className="text-white/70 text-xs">{detail.label}</p>
-            </div>
+            <p className="text-white/70 text-xs mb-1">{detail.label}</p>
             <p className="text-white font-semibold text-lg">{detail.value}</p>
           </div>
         ))}

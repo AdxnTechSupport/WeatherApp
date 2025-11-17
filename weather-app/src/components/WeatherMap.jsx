@@ -13,7 +13,7 @@ const WeatherMap = ({ weatherData, isDay }) => {
 
   return (
     <div className={`${gradientClass} backdrop-blur-sm rounded-2xl p-5 mb-4 transition-colors duration-500`}>
-      <h3 className="text-white font-semibold mb-3 text-lg">📍 Weather Map</h3>
+      <h3 className="text-white font-semibold mb-3 text-lg">Weather Map</h3>
       <div className="bg-white/10 rounded-xl overflow-hidden backdrop-blur-sm" style={{ height: '300px' }}>
         <MapContainer
           center={position}

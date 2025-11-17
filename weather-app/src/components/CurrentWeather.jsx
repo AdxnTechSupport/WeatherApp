@@ -43,7 +43,7 @@ const CurrentWeather = ({ data, isDay }) => {
       <p className="text-lg opacity-75">{formattedDate}</p>
 
       <div className="mt-4 text-sm opacity-60">
-        {isDay ? '☀️ Daytime' : '🌙 Nighttime'}
+        {isDay ? 'Daytime' : 'Nighttime'}
       </div>
     </div>
   );
