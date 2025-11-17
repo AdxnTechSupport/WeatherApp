@@ -1,16 +1,190 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import date
+from datetime import date, datetime, timedelta
 import csv
 import json
 from io import StringIO
+import os
+import requests
 
 from app.database.config import get_db
 from app.models.weather import WeatherQuery
 from app.schemas.weather import WeatherQueryCreate, WeatherQueryUpdate, WeatherQueryResponse
 
 router = APIRouter(prefix="/api/weather", tags=["weather"])
+
+# WeatherAPI.com configuration
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
+WEATHER_API_BASE = "https://api.weatherapi.com/v1"
+
+# SEARCH - Fetch weather data for a date range
+@router.get("/search-range")
+def search_weather_range(
+    location: str = Query(..., description="Location to search for"),
+    start_date: str = Query(..., description="Start date (YYYY-MM-DD)"),
+    end_date: str = Query(..., description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db)
+):
+    """
+    Fetch weather data for a location within a date range.
+
+    - Supports historical data (past dates)
+    - Supports forecast data (future dates, up to 14 days)
+    - Stores each day's data in the database
+    - Returns temperature data for all days in range
+    """
+    if not WEATHER_API_KEY:
+        raise HTTPException(status_code=500, detail="Weather API key not configured")
+
+    try:
+        # Parse dates
+        start = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end = datetime.strptime(end_date, "%Y-%m-%d").date()
+        today = datetime.now().date()
+
+        if start > end:
+            raise HTTPException(status_code=400, detail="start_date must be before or equal to end_date")
+
+        # Check if date range is too large (limit to 30 days)
+        if (end - start).days > 30:
+            raise HTTPException(status_code=400, detail="Date range cannot exceed 30 days")
+
+        results = []
+        current_date = start
+
+        while current_date <= end:
+            try:
+                # Determine if we need historical or forecast data
+                if current_date < today:
+                    # Historical data
+                    url = f"{WEATHER_API_BASE}/history.json"
+                    params = {
+                        "key": WEATHER_API_KEY,
+                        "q": location,
+                        "dt": current_date.strftime("%Y-%m-%d")
+                    }
+                elif current_date == today:
+                    # Current weather
+                    url = f"{WEATHER_API_BASE}/current.json"
+                    params = {
+                        "key": WEATHER_API_KEY,
+                        "q": location
+                    }
+                else:
+                    # Forecast data
+                    days_ahead = (current_date - today).days
+                    if days_ahead > 14:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Forecast data only available up to 14 days in the future"
+                        )
+
+                    url = f"{WEATHER_API_BASE}/forecast.json"
+                    params = {
+                        "key": WEATHER_API_KEY,
+                        "q": location,
+                        "days": days_ahead + 1
+                    }
+
+                response = requests.get(url, params=params, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+
+                # Extract weather data based on endpoint type
+                if current_date < today or current_date == today:
+                    # Historical or current data
+                    if current_date < today:
+                        day_data = data["forecast"]["forecastday"][0]["day"]
+                        location_data = data["location"]
+                    else:
+                        day_data = {
+                            "avgtemp_c": data["current"]["temp_c"],
+                            "maxtemp_c": data["current"]["temp_c"],
+                            "mintemp_c": data["current"]["temp_c"],
+                            "condition": data["current"]["condition"],
+                            "avghumidity": data["current"]["humidity"],
+                            "maxwind_kph": data["current"]["wind_kph"]
+                        }
+                        location_data = data["location"]
+
+                    weather_record = WeatherQuery(
+                        location=location_data["name"],
+                        country=location_data["country"],
+                        latitude=location_data["lat"],
+                        longitude=location_data["lon"],
+                        date_from=current_date,
+                        date_to=current_date,
+                        temperature=day_data["avgtemp_c"] if "avgtemp_c" in day_data else day_data.get("maxtemp_c", 0),
+                        temp_min=day_data.get("mintemp_c"),
+                        temp_max=day_data.get("maxtemp_c"),
+                        weather_condition=day_data["condition"]["text"],
+                        weather_description=day_data["condition"]["text"],
+                        humidity=day_data.get("avghumidity"),
+                        wind_speed=day_data.get("maxwind_kph", 0) / 3.6 if day_data.get("maxwind_kph") else None
+                    )
+                else:
+                    # Forecast data
+                    forecast_day = None
+                    for day in data["forecast"]["forecastday"]:
+                        if day["date"] == current_date.strftime("%Y-%m-%d"):
+                            forecast_day = day
+                            break
+
+                    if not forecast_day:
+                        current_date += timedelta(days=1)
+                        continue
+
+                    day_data = forecast_day["day"]
+                    location_data = data["location"]
+
+                    weather_record = WeatherQuery(
+                        location=location_data["name"],
+                        country=location_data["country"],
+                        latitude=location_data["lat"],
+                        longitude=location_data["lon"],
+                        date_from=current_date,
+                        date_to=current_date,
+                        temperature=day_data["avgtemp_c"],
+                        temp_min=day_data["mintemp_c"],
+                        temp_max=day_data["maxtemp_c"],
+                        weather_condition=day_data["condition"]["text"],
+                        weather_description=day_data["condition"]["text"],
+                        humidity=day_data.get("avghumidity"),
+                        wind_speed=day_data.get("maxwind_kph", 0) / 3.6 if day_data.get("maxwind_kph") else None
+                    )
+
+                # Store in database
+                db.add(weather_record)
+                db.commit()
+                db.refresh(weather_record)
+
+                results.append({
+                    "date": current_date.strftime("%Y-%m-%d"),
+                    "temperature": weather_record.temperature,
+                    "temp_min": weather_record.temp_min,
+                    "temp_max": weather_record.temp_max,
+                    "condition": weather_record.weather_condition,
+                    "humidity": weather_record.humidity,
+                    "wind_speed": weather_record.wind_speed
+                })
+
+            except requests.exceptions.RequestException as e:
+                raise HTTPException(status_code=500, detail=f"Error fetching weather data: {str(e)}")
+
+            current_date += timedelta(days=1)
+
+        return {
+            "location": location,
+            "start_date": start_date,
+            "end_date": end_date,
+            "data": results
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
 # CREATE - Add new weather query
 @router.post("/", response_model=WeatherQueryResponse, status_code=201)
