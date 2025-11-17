@@ -44,18 +44,17 @@ const DateRangeSearch = ({ onSearch, isDay = true }) => {
     ? 'bg-white/30 hover:bg-white/40'
     : 'bg-white/20 hover:bg-white/30';
 
-  // Calculate min and max dates (30 days in past, 14 days in future)
+  // Calculate min and max dates (today to 3 days ahead - free tier limitation)
   const today = new Date();
   const minDate = new Date(today);
-  minDate.setDate(minDate.getDate() - 30);
   const maxDate = new Date(today);
-  maxDate.setDate(maxDate.getDate() + 14);
+  maxDate.setDate(maxDate.getDate() + 3);
 
   return (
     <div className={`${inputClass} backdrop-blur-sm rounded-2xl p-5 mb-4 transition-colors duration-500`}>
-      <h3 className="text-white font-semibold mb-3 text-lg">Search Weather by Date Range</h3>
+      <h3 className="text-white font-semibold mb-3 text-lg">Search Weather Forecast by Date Range</h3>
       <p className="text-white/70 text-sm mb-4">
-        Search historical weather (up to 30 days ago) or forecast (up to 14 days ahead)
+        Search weather forecast for today and up to 3 days ahead
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">

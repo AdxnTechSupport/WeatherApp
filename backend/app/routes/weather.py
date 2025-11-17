@@ -46,113 +46,79 @@ def search_weather_range(
         if start > end:
             raise HTTPException(status_code=400, detail="start_date must be before or equal to end_date")
 
-        # Check if date range is too large (limit to 30 days)
-        if (end - start).days > 30:
-            raise HTTPException(status_code=400, detail="Date range cannot exceed 30 days")
+        # WeatherAPI.com free tier limitations:
+        # - Historical data requires paid plan
+        # - Forecast available for up to 14 days (but free tier only 3 days)
+        # Check if trying to access historical data
+        if start < today:
+            raise HTTPException(
+                status_code=400,
+                detail="Historical weather data requires a paid API plan. Please select today or future dates (up to 3 days ahead)."
+            )
+
+        # Check if date range is too large (free tier: 3 days forecast)
+        if (end - start).days > 3:
+            raise HTTPException(status_code=400, detail="Date range cannot exceed 3 days for free tier")
+
+        # Check if end date is too far in future (free tier: 3 days)
+        if (end - today).days > 3:
+            raise HTTPException(
+                status_code=400,
+                detail="Forecast only available up to 3 days ahead on free tier. Please select dates within the next 3 days."
+            )
 
         results = []
         current_date = start
 
+        # Fetch forecast data for the entire range (up to 3 days)
+        try:
+            days_ahead = (end - today).days + 1
+            url = f"{WEATHER_API_BASE}/forecast.json"
+            params = {
+                "key": WEATHER_API_KEY,
+                "q": location,
+                "days": min(days_ahead, 3)
+            }
+
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            location_data = data["location"]
+
+        except requests.exceptions.RequestException as e:
+            raise HTTPException(status_code=500, detail=f"Error fetching weather data: {str(e)}")
+
+        # Process each day in the date range
         while current_date <= end:
             try:
-                # Determine if we need historical or forecast data
-                if current_date < today:
-                    # Historical data
-                    url = f"{WEATHER_API_BASE}/history.json"
-                    params = {
-                        "key": WEATHER_API_KEY,
-                        "q": location,
-                        "dt": current_date.strftime("%Y-%m-%d")
-                    }
-                elif current_date == today:
-                    # Current weather
-                    url = f"{WEATHER_API_BASE}/current.json"
-                    params = {
-                        "key": WEATHER_API_KEY,
-                        "q": location
-                    }
-                else:
-                    # Forecast data
-                    days_ahead = (current_date - today).days
-                    if days_ahead > 14:
-                        raise HTTPException(
-                            status_code=400,
-                            detail="Forecast data only available up to 14 days in the future"
-                        )
+                # Find the forecast day for this date
+                forecast_day = None
+                for day in data["forecast"]["forecastday"]:
+                    if day["date"] == current_date.strftime("%Y-%m-%d"):
+                        forecast_day = day
+                        break
 
-                    url = f"{WEATHER_API_BASE}/forecast.json"
-                    params = {
-                        "key": WEATHER_API_KEY,
-                        "q": location,
-                        "days": days_ahead + 1
-                    }
+                if not forecast_day:
+                    current_date += timedelta(days=1)
+                    continue
 
-                response = requests.get(url, params=params, timeout=10)
-                response.raise_for_status()
-                data = response.json()
+                day_data = forecast_day["day"]
 
-                # Extract weather data based on endpoint type
-                if current_date < today or current_date == today:
-                    # Historical or current data
-                    if current_date < today:
-                        day_data = data["forecast"]["forecastday"][0]["day"]
-                        location_data = data["location"]
-                    else:
-                        day_data = {
-                            "avgtemp_c": data["current"]["temp_c"],
-                            "maxtemp_c": data["current"]["temp_c"],
-                            "mintemp_c": data["current"]["temp_c"],
-                            "condition": data["current"]["condition"],
-                            "avghumidity": data["current"]["humidity"],
-                            "maxwind_kph": data["current"]["wind_kph"]
-                        }
-                        location_data = data["location"]
-
-                    weather_record = WeatherQuery(
-                        location=location_data["name"],
-                        country=location_data["country"],
-                        latitude=location_data["lat"],
-                        longitude=location_data["lon"],
-                        date_from=current_date,
-                        date_to=current_date,
-                        temperature=day_data["avgtemp_c"] if "avgtemp_c" in day_data else day_data.get("maxtemp_c", 0),
-                        temp_min=day_data.get("mintemp_c"),
-                        temp_max=day_data.get("maxtemp_c"),
-                        weather_condition=day_data["condition"]["text"],
-                        weather_description=day_data["condition"]["text"],
-                        humidity=day_data.get("avghumidity"),
-                        wind_speed=day_data.get("maxwind_kph", 0) / 3.6 if day_data.get("maxwind_kph") else None
-                    )
-                else:
-                    # Forecast data
-                    forecast_day = None
-                    for day in data["forecast"]["forecastday"]:
-                        if day["date"] == current_date.strftime("%Y-%m-%d"):
-                            forecast_day = day
-                            break
-
-                    if not forecast_day:
-                        current_date += timedelta(days=1)
-                        continue
-
-                    day_data = forecast_day["day"]
-                    location_data = data["location"]
-
-                    weather_record = WeatherQuery(
-                        location=location_data["name"],
-                        country=location_data["country"],
-                        latitude=location_data["lat"],
-                        longitude=location_data["lon"],
-                        date_from=current_date,
-                        date_to=current_date,
-                        temperature=day_data["avgtemp_c"],
-                        temp_min=day_data["mintemp_c"],
-                        temp_max=day_data["maxtemp_c"],
-                        weather_condition=day_data["condition"]["text"],
-                        weather_description=day_data["condition"]["text"],
-                        humidity=day_data.get("avghumidity"),
-                        wind_speed=day_data.get("maxwind_kph", 0) / 3.6 if day_data.get("maxwind_kph") else None
-                    )
+                weather_record = WeatherQuery(
+                    location=location_data["name"],
+                    country=location_data["country"],
+                    latitude=location_data["lat"],
+                    longitude=location_data["lon"],
+                    date_from=current_date,
+                    date_to=current_date,
+                    temperature=day_data["avgtemp_c"],
+                    temp_min=day_data["mintemp_c"],
+                    temp_max=day_data["maxtemp_c"],
+                    weather_condition=day_data["condition"]["text"],
+                    weather_description=day_data["condition"]["text"],
+                    humidity=day_data.get("avghumidity"),
+                    wind_speed=day_data.get("maxwind_kph", 0) / 3.6 if day_data.get("maxwind_kph") else None
+                )
 
                 # Store in database
                 db.add(weather_record)
@@ -169,8 +135,9 @@ def search_weather_range(
                     "wind_speed": weather_record.wind_speed
                 })
 
-            except requests.exceptions.RequestException as e:
-                raise HTTPException(status_code=500, detail=f"Error fetching weather data: {str(e)}")
+            except Exception as e:
+                # Log error but continue with next date
+                print(f"Error processing date {current_date}: {str(e)}")
 
             current_date += timedelta(days=1)
 
