@@ -133,9 +133,10 @@ export const getWeatherByCoords = async (lat, lon) => {
 /**
  * Get local weather icon based on condition
  * @param {string} condition - Weather condition text
+ * @param {boolean} isDay - Whether it's daytime (true) or nighttime (false)
  * @returns {string} Local icon path
  */
-const getLocalWeatherIcon = (condition) => {
+const getLocalWeatherIcon = (condition, isDay = true) => {
   const conditionLower = condition.toLowerCase();
 
   // Thunder and storms (highest priority)
@@ -194,11 +195,11 @@ const getLocalWeatherIcon = (condition) => {
     return '/partially sunny.png';
   }
 
-  // Clear/Sunny
+  // Clear/Sunny - return night icon if it's nighttime
   if (conditionLower.includes('clear') ||
       conditionLower.includes('sunny') ||
       conditionLower.includes('fair')) {
-    return '/sun.png';
+    return isDay ? '/sun.png' : '/night-moon.png';
   }
 
   // Default to partially sunny for unknown conditions
@@ -208,9 +209,10 @@ const getLocalWeatherIcon = (condition) => {
 /**
  * Get weather icon URL
  * @param {string} iconCode - Icon code from API (not used anymore, we use condition text)
+ * @param {boolean} isDay - Whether it's daytime (true) or nighttime (false)
  * @returns {string} Icon URL
  */
-export const getWeatherIconUrl = (iconCode) => {
+export const getWeatherIconUrl = (iconCode, isDay = true) => {
   // This will now be called with condition text from our transformed data
-  return getLocalWeatherIcon(iconCode);
+  return getLocalWeatherIcon(iconCode, isDay);
 };

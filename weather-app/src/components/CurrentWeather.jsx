@@ -33,7 +33,7 @@ const CurrentWeather = ({ data, isDay }) => {
 
       <div className="mb-6">
         <img
-          src={getWeatherIconUrl(weatherIcon)}
+          src={getWeatherIconUrl(weatherIcon, isDay)}
           alt={weatherDescription}
           className="w-32 h-32 mx-auto drop-shadow-lg"
         />

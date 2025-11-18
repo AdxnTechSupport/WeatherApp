@@ -40,7 +40,7 @@ const ForecastCard = ({ forecast, isDay }) => {
 
               <div className="flex items-center gap-6">
                 <img
-                  src={getWeatherIconUrl(icon)}
+                  src={getWeatherIconUrl(icon, true)}
                   alt="weather icon"
                   className="w-12 h-12 drop-shadow-md"
                 />
