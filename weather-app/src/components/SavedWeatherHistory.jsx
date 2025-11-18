@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAllWeatherQueries, deleteWeatherQuery } from '../utils/backendApi';
+import { getAllWeatherQueries, deleteWeatherQuery, exportJSON, exportCSV } from '../utils/backendApi';
 
 const SavedWeatherHistory = ({ isDay }) => {
   const [queries, setQueries] = useState([]);
@@ -42,6 +42,22 @@ const SavedWeatherHistory = ({ isDay }) => {
   const handleSearch = (e) => {
     e.preventDefault();
     fetchQueries(searchLocation || null);
+  };
+
+  const handleExportJSON = async () => {
+    try {
+      await exportJSON();
+    } catch (err) {
+      setError('Failed to export JSON: ' + err.message);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      await exportCSV();
+    } catch (err) {
+      setError('Failed to export CSV: ' + err.message);
+    }
   };
 
   const cardBgClass = isDay
@@ -99,6 +115,64 @@ const SavedWeatherHistory = ({ isDay }) => {
           )}
         </div>
       </form>
+
+      {/* Export buttons */}
+      <div className="mb-6 flex gap-3 justify-end">
+        <button
+          onClick={handleExportJSON}
+          disabled={queries.length === 0}
+          className={`px-6 py-3 rounded-xl font-medium transition-colors flex items-center gap-2 ${
+            queries.length === 0
+              ? 'bg-gray-400 cursor-not-allowed text-white'
+              : isDay
+              ? 'bg-green-500 hover:bg-green-600 text-white'
+              : 'bg-green-600 hover:bg-green-700 text-white'
+          }`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          Export JSON
+        </button>
+        <button
+          onClick={handleExportCSV}
+          disabled={queries.length === 0}
+          className={`px-6 py-3 rounded-xl font-medium transition-colors flex items-center gap-2 ${
+            queries.length === 0
+              ? 'bg-gray-400 cursor-not-allowed text-white'
+              : isDay
+              ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+          }`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          Export CSV
+        </button>
+      </div>
 
       {loading && (
         <div className="text-center py-8">
